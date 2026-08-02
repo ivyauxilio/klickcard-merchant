@@ -1,6 +1,8 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./slices/authSlice";
 import uiReducer from "./slices/uiSlice";
+import menuReducer from "./slices/menuSlice";
+import promotionReducer from "./slices/promotionSlice";
 // import authReducer from './slices/authSlice';
 // import merchantReducer from './slices/merchantSlice';
 // import menuReducer from './slices/menuSlice';
@@ -10,6 +12,8 @@ export function makeStore() {
   return configureStore({
     reducer: {
       auth: authReducer,
+      menu: menuReducer,
+      promotion: promotionReducer,
       ui: uiReducer,
     },
   });
