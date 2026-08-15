@@ -9,9 +9,10 @@ import Notification from "@/components/ui/Notification";
 import { headers } from "next/headers";
 
 import LayoutWrapper from "@/components/layout/LayoutWrapper";
+import AuthProvider from "@/components/AuthProvider";
 
 export const metadata = {
-  title: "Disquento App",
+  title: "KlickCard App",
   description: "Discount App and earn rewards",
 };
 
@@ -20,19 +21,21 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className="font-body antialiased">
         <Providers>
-          <SidebarProvider>
-            <div className="flex h-screen overflow-hidden bg-gray-50">
-              <Sidebar />
-              {/* <div className="flex-1 flex flex-col min-w-0 overflow-hidden"> */}
-              <div className="flex-1 flex flex-col min-w-0 overflow-hidden md:ml-64">
-                <Header />
-                <SessionInit />
-                <main className="flex-1 overflow-y-auto p-4 md:p-6">
-                  {children}
-                </main>
+          <AuthProvider>
+            <SidebarProvider>
+              <div className="flex h-screen overflow-hidden bg-gray-50">
+                <Sidebar />
+                {/* <div className="flex-1 flex flex-col min-w-0 overflow-hidden"> */}
+                <div className="flex-1 flex flex-col min-w-0 overflow-hidden md:ml-64">
+                  <Header />
+                  <SessionInit />
+                  <main className="flex-1 overflow-y-auto p-4 md:p-6">
+                    {children}
+                  </main>
+                </div>
               </div>
-            </div>
-          </SidebarProvider>
+            </SidebarProvider>
+          </AuthProvider>
         </Providers>
       </body>
     </html>

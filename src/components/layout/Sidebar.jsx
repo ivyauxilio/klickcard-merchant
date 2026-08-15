@@ -45,23 +45,23 @@ const menuItems = [
     activeIcon: TagIconSolid,
     badge: "5",
   },
-  {
-    id: "analytics",
-    label: "Analytics",
-    href: "/analytics",
-    icon: ChartBarIcon,
-  },
-  {
-    id: "customers",
-    label: "Customers",
-    href: "/customers",
-    icon: UserGroupIcon,
-  },
-  { id: "orders", label: "Orders", href: "/orders", icon: ShoppingBagIcon },
+  // {
+  //   id: "analytics",
+  //   label: "Analytics",
+  //   href: "/analytics",
+  //   icon: ChartBarIcon,
+  // },
+  // {
+  //   id: "customers",
+  //   label: "Customers",
+  //   href: "/customers",
+  //   icon: UserGroupIcon,
+  // },
+  // { id: "orders", label: "Orders", href: "/orders", icon: ShoppingBagIcon },
 ];
 
 const bottomMenuItems = [
-  { id: "settings", label: "Settings", href: "/settings", icon: Cog6ToothIcon },
+  // { id: "settings", label: "Settings", href: "/settings", icon: Cog6ToothIcon },
   { id: "logout", label: "Logout", href: "#", icon: ArrowRightOnRectangleIcon },
 ];
 
@@ -113,7 +113,7 @@ export default function Sidebar() {
               <span className="text-white font-bold text-sm">D</span>
             </div>
             <span className="text-lg font-semibold text-gray-900">
-              Disquento
+              KlickCard
             </span>
           </Link>
 

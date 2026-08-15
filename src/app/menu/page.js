@@ -382,6 +382,7 @@ export default function MenuItemsPage() {
                   </button> */}
                   <DeleteButton
                     itemId={item.menu_item_id}
+                    page="Menu Item"
                     itemName={item.name}
                     onSuccess={handleDeleteSuccess}
                     variant="icon"

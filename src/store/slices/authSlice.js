@@ -132,6 +132,28 @@ export const resetPassword = createAsyncThunk(
     }
   },
 );
+export const hydrateAuth = createAsyncThunk(
+  "auth/hydrate",
+  async (_, { rejectWithValue }) => {
+    try {
+      if (typeof window !== "undefined") {
+        const token = localStorage.getItem("token");
+        const user = localStorage.getItem("user");
+
+        if (token && user) {
+          return {
+            token,
+            user: JSON.parse(user),
+            isAuthenticated: true,
+          };
+        }
+      }
+      return null;
+    } catch (error) {
+      return rejectWithValue("Failed to hydrate auth");
+    }
+  },
+);
 
 const initialState = {
   user: null,
@@ -141,6 +163,7 @@ const initialState = {
   isInitialized: false, // becomes true once we've checked for an existing session
   errors: null,
   message: null, // used for forgot/reset password confirmation text
+  isHydrated: false,
 };
 
 function setSession(token) {
@@ -172,6 +195,11 @@ const authSlice = createSlice({
         }
       }
       state.isInitialized = true;
+    },
+    setAuth: (state, action) => {
+      state.user = action.payload.user;
+      state.token = action.payload.token;
+      state.isAuthenticated = true;
     },
     clearAuthErrors(state) {
       state.errors = null;
@@ -212,7 +240,6 @@ const authSlice = createSlice({
         state.token = action.payload.access_token;
         state.isAuthenticated = true;
         setSession(action.payload.access_token);
-        console.log("load login slice");
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.status = "failed";
@@ -299,6 +326,22 @@ const authSlice = createSlice({
       .addCase(resetPassword.rejected, (state, action) => {
         state.status = "failed";
         state.errors = action.payload;
+      })
+      // Hydrate
+      .addCase(hydrateAuth.pending, (state) => {
+        state.isHydrated = false;
+      })
+      .addCase(hydrateAuth.fulfilled, (state, action) => {
+        state.isHydrated = true;
+        if (action.payload) {
+          state.user = action.payload.user;
+          state.token = action.payload.token;
+          state.isAuthenticated = true;
+        }
+      })
+      .addCase(hydrateAuth.rejected, (state) => {
+        state.isHydrated = true;
+        state.isAuthenticated = false;
       });
   },
 });

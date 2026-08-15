@@ -11,6 +11,7 @@ import {
   PencilIcon,
   TrashIcon,
   EyeIcon,
+  QrCodeIcon,
 } from "@heroicons/react/24/outline";
 import {
   getPromotions,
@@ -237,85 +238,95 @@ export default function PromotionsPage() {
             key={item.promotion_id}
             className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
           >
-            <div className="p-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="font-medium text-gray-900">{item.title}</h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span
-                      className={`px-2 py-0.5 text-xs font-medium rounded-full ${getTypeBadge(item.promo_type)}`}
-                    >
-                      {item.promo_type.charAt(0).toUpperCase() +
-                        item.promo_type.slice(1)}
+            <Link href={`/promotions/${item.promotion_id}`}>
+              <div className="p-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="font-medium text-gray-900">{item.title}</h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span
+                        className={`px-2 py-0.5 text-xs font-medium rounded-full ${getTypeBadge(item.promo_type)}`}
+                      >
+                        {item.promo_type.charAt(0).toUpperCase() +
+                          item.promo_type.slice(1)}
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusBadge(item.status)}`}
+                      >
+                        {item.status.charAt(0).toUpperCase() +
+                          item.status.slice(1)}
+                      </span>
+                      {/* QR Code Indicator */}
+                      {item.qr_code && (
+                        <span className="px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-800 rounded-full flex items-center gap-1">
+                          <QrCodeIcon className="w-3 h-3" />
+                          QR
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-lg font-bold text-primary-600">
+                    {item.promo_type === "percentage"
+                      ? `${item.value}%`
+                      : item.promo_type === "fixed"
+                        ? `₱${parseFloat(item.value).toFixed(2)}`
+                        : "BOGO"}
+                  </span>
+                </div>
+
+                <p className="text-sm text-gray-500 mt-2 line-clamp-2">
+                  {item.description || "No description"}
+                </p>
+
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">
+                      <span className="font-medium">Min Order:</span>{" "}
+                      {item.min_order_amount
+                        ? `₱${parseFloat(item.min_order_amount).toFixed(2)}`
+                        : "None"}
                     </span>
-                    <span
-                      className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusBadge(item.status)}`}
-                    >
-                      {item.status.charAt(0).toUpperCase() +
-                        item.status.slice(1)}
+                    <span className="text-gray-500">
+                      <span className="font-medium">Uses:</span>{" "}
+                      {item.used_count || 0}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm mt-1">
+                    <span className="text-gray-500">
+                      <span className="font-medium">Valid:</span>{" "}
+                      {item.start_date
+                        ? new Date(item.start_date).toLocaleDateString()
+                        : "N/A"}
+                      {item.end_date &&
+                        ` - ${new Date(item.end_date).toLocaleDateString()}`}
                     </span>
                   </div>
                 </div>
-                <span className="text-lg font-bold text-primary-600">
-                  {item.promo_type === "percentage"
-                    ? `${item.value}%`
-                    : item.promo_type === "fixed"
-                      ? `₱${parseFloat(item.value).toFixed(2)}`
-                      : "BOGO"}
-                </span>
-              </div>
 
-              <p className="text-sm text-gray-500 mt-2 line-clamp-2">
-                {item.description || "No description"}
-              </p>
-
-              <div className="mt-3 pt-3 border-t border-gray-100">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">
-                    <span className="font-medium">Min Order:</span>{" "}
-                    {item.min_order_amount
-                      ? `₱${parseFloat(item.min_order_amount).toFixed(2)}`
-                      : "None"}
-                  </span>
-                  <span className="text-gray-500">
-                    <span className="font-medium">Uses:</span>{" "}
-                    {item.used_count || 0}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm mt-1">
-                  <span className="text-gray-500">
-                    <span className="font-medium">Valid:</span>{" "}
-                    {item.start_date
-                      ? new Date(item.start_date).toLocaleDateString()
-                      : "N/A"}
-                    {item.end_date &&
-                      ` - ${new Date(item.end_date).toLocaleDateString()}`}
-                  </span>
+                <div className="flex items-center justify-end gap-1 mt-3 pt-3 border-t border-gray-100">
+                  <Link
+                    href={`/promotions/${item.promotion_id}`}
+                    className="p-1.5 text-gray-400 hover:text-primary-600 rounded-lg hover:bg-primary-50 transition-colors"
+                  >
+                    <EyeIcon className="w-4 h-4" />
+                  </Link>
+                  <Link
+                    href={`/promotions/${item.promotion_id}/edit`}
+                    className="p-1.5 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+                  >
+                    <PencilIcon className="w-4 h-4" />
+                  </Link>
+                  <DeleteButton
+                    itemId={item.promotion_id}
+                    page="Promotion Item"
+                    itemName={item.title}
+                    onSuccess={() => dispatch(getPromotions(filters))}
+                    variant="icon"
+                    deleteApi={() => deletePromotion(item.promotion_id)}
+                  />
                 </div>
               </div>
-
-              <div className="flex items-center justify-end gap-1 mt-3 pt-3 border-t border-gray-100">
-                <Link
-                  href={`/promotions/${item.promotion_id}`}
-                  className="p-1.5 text-gray-400 hover:text-primary-600 rounded-lg hover:bg-primary-50 transition-colors"
-                >
-                  <EyeIcon className="w-4 h-4" />
-                </Link>
-                <Link
-                  href={`/promotions/${item.promotion_id}/edit`}
-                  className="p-1.5 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
-                >
-                  <PencilIcon className="w-4 h-4" />
-                </Link>
-                <DeleteButton
-                  itemId={item.promotion_id}
-                  itemName={item.title}
-                  onSuccess={() => dispatch(getPromotions(filters))}
-                  variant="icon"
-                  deleteApi={() => deletePromotion(item.promotion_id)}
-                />
-              </div>
-            </div>
+            </Link>
           </div>
         ))}
       </div>

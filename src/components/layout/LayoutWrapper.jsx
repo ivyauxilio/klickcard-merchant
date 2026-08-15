@@ -3,7 +3,6 @@
 import { usePathname } from "next/navigation";
 import { useSelector } from "react-redux";
 import { selectIsAuthenticated } from "@/store/slices/authSlice";
-import { selectSidebarOpen } from "@/store/slices/uiSlice";
 
 import SessionInit from "@/components/SessionInit";
 import { SidebarProvider } from "@/context/SidebarContext";
@@ -15,7 +14,6 @@ import Notification from "@/components/ui/Notification";
 export default function LayoutWrapper({ children }) {
   const pathname = usePathname();
   const isAuthenticated = useSelector(selectIsAuthenticated);
-  const isSelectSidebarOpen = useSelector(selectSidebarOpen);
 
   // Check if current route is auth page
   const isAuthPage =

@@ -80,6 +80,25 @@ export const deletePromotion = createAsyncThunk(
   },
 );
 
+export const fetchMenuItemsForPromotion = createAsyncThunk(
+  "promotion/fetchMenuItems",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get("/merchant/menu-items", {
+        params: {
+          per_page: 100,
+          status: "available",
+        },
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch menu items",
+      );
+    }
+  },
+);
+
 // ============================================
 // INITIAL STATE
 // ============================================
@@ -187,7 +206,19 @@ const promotionSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload;
       })
-
+      .addCase(fetchMenuItemsForPromotion.pending, (state) => {
+        state.menuItemsLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchMenuItemsForPromotion.fulfilled, (state, action) => {
+        state.menuItemsLoading = false;
+        state.menuItems = action.payload.data.data || [];
+        state.error = null;
+      })
+      .addCase(fetchMenuItemsForPromotion.rejected, (state, action) => {
+        state.menuItemsLoading = false;
+        state.error = action.payload;
+      })
       // Update Promotion
       .addCase(updatePromotion.pending, (state) => {
         state.isLoading = true;
@@ -245,3 +276,6 @@ export const selectPromotionStats = (state) => state.promotion.stats;
 export const selectPromotionLoading = (state) => state.promotion.isLoading;
 export const selectPromotionError = (state) => state.promotion.error;
 export const selectPromotionFilters = (state) => state.promotion.filters;
+export const selectMenuItemsForPromotion = (state) => state.promotion.menuItems;
+export const selectMenuItemsLoading = (state) =>
+  state.promotion.menuItemsLoading;

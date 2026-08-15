@@ -10,6 +10,7 @@ import { addNotification } from "@/store/slices/uiSlice";
 export default function DeleteButton({
   itemId,
   itemName,
+  page,
   onSuccess,
   variant = "icon",
   className = "",
@@ -70,6 +71,7 @@ export default function DeleteButton({
         {showModal && (
           <DeleteModal
             itemName={itemName}
+            page={page}
             isLoading={isLoading}
             onConfirm={handleDelete}
             onCancel={() => setShowModal(false)}
@@ -93,6 +95,7 @@ export default function DeleteButton({
       {showModal && (
         <DeleteModal
           itemName={itemName}
+          page={page}
           isLoading={isLoading}
           onConfirm={handleDelete}
           onCancel={() => setShowModal(false)}
@@ -106,7 +109,7 @@ export default function DeleteButton({
 // DELETE CONFIRMATION MODAL
 // ============================================
 
-function DeleteModal({ itemName, isLoading, onConfirm, onCancel }) {
+function DeleteModal({ itemName, page, isLoading, onConfirm, onCancel }) {
   return (
     <>
       {/* Backdrop */}
@@ -123,7 +126,7 @@ function DeleteModal({ itemName, isLoading, onConfirm, onCancel }) {
 
             {/* Title */}
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Delete Menu Item
+              Delete {page}
             </h3>
 
             {/* Message */}
