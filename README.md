@@ -1,4 +1,6 @@
-# Next.js + Redux Auth Frontend (for a Laravel 12 API)
+# KlickCard Merchant App
+
+Next.js + Redux Auth Frontend (for a Laravel 12 API)
 
 Full authentication flow — login, signup, logout, forgot/reset password,
 dashboard, and profile — built with Next.js (App Router) and Redux Toolkit,
