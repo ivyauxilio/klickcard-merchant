@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import api from "@/lib/axios";
-import type { RootState } from "@/store/store";
+// import type { RootState } from "@/store/store";
 import { addNotification } from "@/store/slices/uiSlice";
 import {
   QrCodeIcon,
@@ -17,15 +17,30 @@ import {
   CalendarIcon,
 } from "@heroicons/react/24/outline";
 
+import {
+  getPromotion,
+  selectCurrentPromotion,
+  selectPromotionLoading,
+  clearCurrentPromotion,
+  clearError,
+} from "@/store/slices/promotionSlice";
+
 export default function RedemptionPage() {
   const router = useRouter();
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
 
   // const { token, user } = useSelector((state: RootState) => state.auth);
+  // const { token, user, isAuthenticated, isHydrated } = useSelector(
+  //   (state: RootState) => state.auth,
+  // );
   const { token, user, isAuthenticated, isHydrated } = useSelector(
-    (state: RootState) => state.auth,
+    (state) => state.auth,
   );
+
+  // Get promotion data from Redux
+  const promotion = useSelector(selectCurrentPromotion);
+  const isLoadingPromotion = useSelector(selectPromotionLoading);
 
   const [loading, setLoading] = useState(true);
   const [redemptionData, setRedemptionData] = useState(null);
@@ -34,6 +49,7 @@ export default function RedemptionPage() {
   const [authChecked, setAuthChecked] = useState(false);
 
   const tokenParam = searchParams.get("token");
+  const [promotionId, setPromotionId] = useState(null);
 
   // Auth check - separate from data loading
   useEffect(() => {
@@ -66,12 +82,38 @@ export default function RedemptionPage() {
     try {
       const decoded = JSON.parse(atob(decodeURIComponent(tokenParam)));
       setRedemptionData(decoded);
+
+      if (decoded.promotion_id) {
+        setPromotionId(decoded.promotion_id);
+      }
+
       setLoading(false);
     } catch (err) {
       setError("Invalid QR code format. Please scan again.");
       setLoading(false);
     }
-  }, [tokenParam, authChecked]);
+  }, [tokenParam, authChecked, dispatch]);
+
+  useEffect(() => {
+    if (promotionId) {
+      const fetchPromotion = async () => {
+        try {
+          await dispatch(getPromotion(promotionId)).unwrap();
+        } catch (error) {
+          console.error("Failed to load promotion:", error);
+        }
+      };
+      fetchPromotion();
+    }
+  }, [promotionId, dispatch]);
+
+  // Cleanup Redux state on unmount
+  useEffect(() => {
+    return () => {
+      dispatch(clearCurrentPromotion());
+      dispatch(clearError());
+    };
+  }, [dispatch]);
 
   const handleConfirmRedemption = async () => {
     if (!redemptionData) return;
@@ -220,16 +262,53 @@ export default function RedemptionPage() {
             </div>
           </div>
 
+          <div className="p-4">
+            <div className="flex items-center gap-2">
+              <TagIcon className="w-5 h-5 text-purple-500" />
+              <span className="text-gray-600">Promotion</span>
+            </div>
+            {isLoadingPromotion ? (
+              <div className="mt-2">
+                <div className="animate-pulse h-4 w-3/4 bg-gray-200 rounded"></div>
+              </div>
+            ) : promotion ? (
+              <div className="mt-2">
+                <p className="font-bold text-lg text-gray-900">
+                  {promotion.title}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {promotion.promo_type === "percentage"
+                    ? `${promotion.value}% OFF`
+                    : promotion.promo_type === "fixed"
+                      ? `₱${parseFloat(promotion.value).toFixed(2)} OFF`
+                      : "BOGO"}
+                </p>
+                {promotion.description && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    {promotion.description}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="mt-2">
+                <p className="font-medium text-gray-700">
+                  {redemptionData.promotion_id}
+                </p>
+                <p className="text-sm text-gray-500">Loading details...</p>
+              </div>
+            )}
+          </div>
+
           {/* Promotion Details */}
           <div className="border rounded-lg divide-y">
-            <div className="p-4 flex items-center justify-between">
+            {/* <div className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <TagIcon className="w-5 h-5 text-gray-400" />
                 <span className="text-gray-600">Promotion</span>
               </div>
               <span className="font-medium">{redemptionData.promotion_id}</span>
-            </div>
-            <div className="p-4 flex items-center justify-between">
+            </div> */}
+            {/* <div className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <CurrencyDollarIcon className="w-5 h-5 text-gray-400" />
                 <span className="text-gray-600">Value</span>
@@ -237,7 +316,7 @@ export default function RedemptionPage() {
               <span className="font-medium text-green-600">
                 ₱{redemptionData.value || 0}
               </span>
-            </div>
+            </div> */}
             <div className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <CalendarIcon className="w-5 h-5 text-gray-400" />

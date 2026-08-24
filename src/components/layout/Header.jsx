@@ -10,6 +10,7 @@ import {
 import { useSidebar } from "@/context/SidebarContext";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import {
   Bars3Icon,
   BellIcon,
@@ -21,6 +22,20 @@ import {
 } from "@heroicons/react/24/outline";
 import { useState, useEffect } from "react";
 import { addNotification } from "@/store/slices/uiSlice";
+import FloatingScanButton from "@/components/FloatingScanButton";
+
+// Dynamically import mobile scanner
+const MobileScanner = dynamic(() => import("@/components/MobileScanner"), {
+  ssr: false,
+  loading: () => (
+    <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto" />
+        <p className="mt-4 text-white">Loading scanner...</p>
+      </div>
+    </div>
+  ),
+});
 
 export default function Header() {
   const dispatch = useDispatch();
@@ -31,6 +46,11 @@ export default function Header() {
   const { user } = useSelector((state) => state.auth);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const [showScanner, setShowScanner] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [scanResult, setScanResult] = useState(null);
+  const [scanError, setScanError] = useState(null);
 
   const fullName = [user?.firstname, user?.lastname].filter(Boolean).join(" ");
 
@@ -47,6 +67,64 @@ export default function Header() {
       .split("-")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
+  };
+
+  const openScanner = () => {
+    setScanResult(null);
+    setScanError(null);
+    setShowScanner(true);
+    // Close sidebar on mobile when scanner opens
+    // if (window.innerWidth < 768) {
+    //   onClose();
+    // }
+  };
+
+  const handleScanSuccess = async (decodedText) => {
+    setScanning(true);
+    setScanError(null);
+
+    try {
+      const response = await merchantCardAPI.scanCard(decodedText);
+
+      if (response.success) {
+        setScanResult(response.data);
+        dispatch(
+          addNotification({
+            type: "success",
+            message: "Card verified successfully!",
+          }),
+        );
+
+        if (navigator.vibrate) {
+          navigator.vibrate(200);
+        }
+      } else {
+        setScanError(response.message || "Failed to scan card.");
+        if (navigator.vibrate) {
+          navigator.vibrate([100, 100, 100]);
+        }
+      }
+    } catch (error) {
+      setScanError(
+        error.response?.data?.message ||
+          "Failed to scan card. Please try again.",
+      );
+      if (navigator.vibrate) {
+        navigator.vibrate([100, 100, 100]);
+      }
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  const handleScanError = (error) => {
+    console.log("Scan error:", error);
+  };
+
+  const closeScanner = () => {
+    setShowScanner(false);
+    setScanResult(null);
+    setScanError(null);
   };
 
   useEffect(() => {
@@ -203,6 +281,21 @@ export default function Header() {
           />
         </div>
       </div>
+
+      {/* Floating Scan Button - Mobile Only */}
+      <FloatingScanButton onPress={openScanner} />
+
+      {/* Mobile Scanner Modal */}
+      <MobileScanner
+        isOpen={showScanner}
+        onScanSuccess={handleScanSuccess}
+        onScanError={handleScanError}
+        onClose={() => {
+          setShowScanner(false);
+          setScanResult(null);
+          setScanError(null);
+        }}
+      />
     </header>
   );
 }

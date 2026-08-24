@@ -118,3 +118,167 @@ body {
 .animate-slide-out {
   animation: slideOut 0.3s ease-in forwards;
 }
+
+/* app/globals.css */
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out forwards;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.3s ease-in forwards;
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 1.5s ease-out infinite;
+}
+
+/* Mobile scanner overlay styles */
+.scanner-overlay {
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Corner markers for scanner */
+.scanner-corner {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-color: #8b5cf6;
+  border-style: solid;
+  border-width: 0;
+}
+
+.scanner-corner-tl {
+  top: 20px;
+  left: 20px;
+  border-top-width: 4px;
+  border-left-width: 4px;
+  border-radius: 4px 0 0 0;
+}
+
+.scanner-corner-tr {
+  top: 20px;
+  right: 20px;
+  border-top-width: 4px;
+  border-right-width: 4px;
+  border-radius: 0 4px 0 0;
+}
+
+.scanner-corner-bl {
+  bottom: 20px;
+  left: 20px;
+  border-bottom-width: 4px;
+  border-left-width: 4px;
+  border-radius: 0 0 0 4px;
+}
+
+.scanner-corner-br {
+  bottom: 20px;
+  right: 20px;
+  border-bottom-width: 4px;
+  border-right-width: 4px;
+  border-radius: 0 0 4px 0;
+}
+
+/* Scan line animation */
+.scan-line {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #8b5cf6, transparent);
+  animation: scanMove 2s ease-in-out infinite;
+}
+
+@keyframes scanMove {
+  0% {
+    transform: translate(-50%, -50%) translateY(-80px);
+    opacity: 0;
+  }
+  50% {
+    transform: translate(-50%, -50%) translateY(80px);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) translateY(-80px);
+    opacity: 0;
+  }
+}
+
+.floating-scan-button {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .floating-scan-button {
+    display: flex;
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #7c3aed;
+    color: white;
+
+    border: none;
+    cursor: pointer;
+
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+
+    z-index: 9999;
+
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+}
+
+.floating-scan-text {
+  margin-top: 80px;
+  color: black;
+}
