@@ -27,14 +27,14 @@ import FloatingScanButton from "@/components/FloatingScanButton";
 // Dynamically import mobile scanner
 const MobileScanner = dynamic(() => import("@/components/MobileScanner"), {
   ssr: false,
-  loading: () => (
-    <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto" />
-        <p className="mt-4 text-white">Loading scanner...</p>
-      </div>
-    </div>
-  ),
+  // loading: () => (
+  //   <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
+  //     <div className="text-center">
+  //       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto" />
+  //       <p className="mt-4 text-white">Loading scanner...</p>
+  //     </div>
+  //   </div>
+  // ),
 });
 
 export default function Header() {
@@ -135,6 +135,9 @@ export default function Header() {
     }
   }, [isAuthenticated, isLoggingOut, router]);
 
+  if (!isAuthenticated) {
+    return null;
+  }
   const handleLogout = async () => {
     try {
       const result = await dispatch(logoutUser()).unwrap();

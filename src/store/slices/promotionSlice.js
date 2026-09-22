@@ -80,20 +80,35 @@ export const deletePromotion = createAsyncThunk(
   },
 );
 
+// export const fetchMenuItemsForPromotion = createAsyncThunk(
+//   "promotion/fetchMenuItems",
+//   async (_, { rejectWithValue }) => {
+//     try {
+//       const response = await api.get("/merchant/menu-items", {
+//         params: {
+//           per_page: 100,
+//           status: "available",
+//         },
+//       });
+//       console.log("fetch menu items", response.data);
+//       return response.data;
+//     } catch (error) {
+//       return rejectWithValue(
+//         error.response?.data?.message || "Failed to fetch menu items",
+//       );
+//     }
+//   },
+// );
+
 export const fetchMenuItemsForPromotion = createAsyncThunk(
   "promotion/fetchMenuItems",
-  async (_, { rejectWithValue }) => {
+  async (params = {}, { rejectWithValue }) => {
     try {
-      const response = await api.get("/merchant/menu-items", {
-        params: {
-          per_page: 100,
-          status: "available",
-        },
-      });
+      const response = await api.get("/merchant/menu-items", { params });
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch menu items",
+        error.response?.data?.message || "Failed to get menu items",
       );
     }
   },

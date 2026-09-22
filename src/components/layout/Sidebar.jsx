@@ -1,30 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSidebar } from "@/context/SidebarContext";
-import { useSelector } from "react-redux";
-import { selectIsAuthenticated } from "@/store/slices/authSlice";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  selectIsAuthenticated,
+  // Change this import to your actual logout action if necessary:
+  logoutUser,
+} from "@/store/slices/authSlice";
 import dynamic from "next/dynamic";
-import { usePathname, useRouter } from "next/navigation";
-import { useDispatch } from "react-redux";
+import { usePathname } from "next/navigation";
 import { merchantCardAPI } from "@/lib/merchantCards";
 import { addNotification } from "@/store/slices/uiSlice";
 import Link from "next/link";
+import CreditBadge from "@/components/promotion/CreditBadge";
+
 import {
   HomeIcon,
   ClipboardDocumentListIcon,
   TagIcon,
-  QrCodeIcon,
-  ChartBarIcon,
-  UserGroupIcon,
   ShoppingBagIcon,
-  Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
   XMarkIcon,
   CameraIcon,
   XCircleIcon,
   CheckCircleIcon,
+  ShoppingCartIcon,
+  BanknotesIcon,
 } from "@heroicons/react/24/outline";
+
 import {
   HomeIcon as HomeIconSolid,
   ClipboardDocumentListIcon as ClipboardDocumentListIconSolid,
@@ -54,65 +58,138 @@ const menuItems = [
     activeIcon: TagIconSolid,
     badge: "5",
   },
-  // {
-  //   id: "analytics",
-  //   label: "Analytics",
-  //   href: "/analytics",
-  //   icon: ChartBarIcon,
-  // },
-  // {
-  //   id: "customers",
-  //   label: "Customers",
-  //   href: "/customers",
-  //   icon: UserGroupIcon,
-  // },
-  // { id: "orders", label: "Orders", href: "/orders", icon: ShoppingBagIcon },
+  {
+    id: "products",
+    label: "Products",
+    href: "/products",
+    icon: ShoppingCartIcon,
+  },
+  {
+    id: "orders",
+    label: "Orders",
+    href: "/orders",
+    icon: ShoppingBagIcon,
+  },
+  {
+    id: "subscription",
+    label: "More Credits",
+    href: "/merchant/subscription",
+    icon: BanknotesIcon,
+  },
 ];
 
-// Dynamically import the QRScanner component with no SSR
 const QRScanner = dynamic(() => import("@/components/QRScanner"), {
   ssr: false,
-  loading: () => (
-    <div className="bg-gray-100 rounded-lg p-4 text-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto" />
-      <p className="mt-2 text-sm text-gray-600">Loading scanner...</p>
-    </div>
-  ),
 });
 
 const bottomMenuItems = [
-  // { id: "settings", label: "Settings", href: "/settings", icon: Cog6ToothIcon },
-  { id: "logout", label: "Logout", href: "#", icon: ArrowRightOnRectangleIcon },
+  {
+    id: "logout",
+    label: "Logout",
+    href: "#",
+    icon: ArrowRightOnRectangleIcon,
+  },
 ];
-// interface SidebarProps {
-//   isOpen: boolean;
-//   onClose: () => void;
-// }
+
 export default function Sidebar() {
+  const dispatch = useDispatch();
+
   const { isOpen, isMobile, closeSidebar } = useSidebar();
+
   const pathname = usePathname();
+
   const isAuthenticated = useSelector(selectIsAuthenticated);
 
-  const router = useRouter();
-  const dispatch = useDispatch();
+  /*
+   * IMPORTANT:
+   *
+   * Redux Persist needs to rehydrate the persisted Redux state
+   * before we know whether the user is actually authenticated.
+   *
+   * Start with false so the sidebar is NEVER rendered while
+   * authentication state is being determined.
+   */
+  // const [isHydrated, setIsHydrated] = useState(false);
+
   const [showScanner, setShowScanner] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState(null);
   const [scanError, setScanError] = useState(null);
 
-  // Don't render sidebar if not authenticated
+  /*
+   * Wait until the client has mounted.
+   *
+   * This prevents the sidebar from appearing during the initial
+   * Redux/Redux-Persist rehydration phase.
+   */
+  // useEffect(() => {
+  //   setIsHydrated(true);
+  // }, []);
+
+  /*
+   * If authentication changes to false, immediately clean up
+   * all sidebar-related state.
+   */
+  useEffect(() => {
+    if (!isAuthenticated) {
+      closeSidebar();
+
+      setShowScanner(false);
+      setScanning(false);
+      setScanResult(null);
+      setScanError(null);
+    }
+  }, [isAuthenticated, closeSidebar]);
+
+  /*
+   * DO NOT render anything until Redux state has been hydrated.
+   *
+   * Also don't render if the user is not authenticated.
+   */
+  // if (!isHydrated || !isAuthenticated) {
+  //   return null;
+  // }
+
   if (!isAuthenticated) {
     return null;
   }
 
   const isActive = (href) => {
-    if (href === "/dashboard") return pathname === "/dashboard";
+    if (href === "/dashboard") {
+      return pathname === "/dashboard";
+    }
+
     return pathname?.startsWith(href);
   };
 
-  const handleLogout = (e) => {
+  const handleLogout = async (e) => {
     e.preventDefault();
-    console.log("Logout clicked");
+
+    try {
+      // Immediately close/hide sidebar UI
+      closeSidebar();
+      setShowScanner(false);
+      setScanning(false);
+      setScanResult(null);
+      setScanError(null);
+
+      /*
+       * Clear Redux authentication state.
+       *
+       * If your logout action requires an API request,
+       * perform that request before dispatching logout.
+       */
+      dispatch(logoutUser());
+    } catch (error) {
+      console.error("Logout error:", error);
+
+      dispatch(
+        addNotification({
+          type: "error",
+          message: "Failed to logout. Please try again.",
+        }),
+      );
+    }
   };
 
   const handleScanSuccess = async (decodedText) => {
@@ -124,6 +201,7 @@ export default function Sidebar() {
 
       if (response.success) {
         setScanResult(response.data);
+
         dispatch(
           addNotification({
             type: "success",
@@ -136,6 +214,7 @@ export default function Sidebar() {
         }
       } else {
         setScanError(response.message || "Failed to scan card.");
+
         if (navigator.vibrate) {
           navigator.vibrate([100, 100, 100]);
         }
@@ -145,6 +224,7 @@ export default function Sidebar() {
         error.response?.data?.message ||
           "Failed to scan card. Please try again.",
       );
+
       if (navigator.vibrate) {
         navigator.vibrate([100, 100, 100]);
       }
@@ -161,16 +241,13 @@ export default function Sidebar() {
     setShowScanner(false);
     setScanResult(null);
     setScanError(null);
+    setScanning(false);
   };
 
   const openScanner = () => {
     setScanResult(null);
     setScanError(null);
     setShowScanner(true);
-    // Close sidebar on mobile when scanner opens
-    // if (window.innerWidth < 768) {
-    //   onClose();
-    // }
   };
 
   return (
@@ -182,8 +259,8 @@ export default function Sidebar() {
           onClick={closeSidebar}
         />
       )}
-      {/* Sidebar - Fixed positioned */}
 
+      {/* Sidebar */}
       <aside
         className={`
           fixed top-0 left-0 z-50 h-full bg-white border-r border-gray-200
@@ -197,16 +274,23 @@ export default function Sidebar() {
         {/* Logo */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 flex-shrink-0">
           <Link href="/dashboard" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">D</span>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center">
+              {/* <span className="text-white font-bold text-sm">D</span> */}
+              <img
+                src="/assets/logo/KlickCard.png"
+                alt="KlickCard Logo"
+                className="h-10 w-auto object-contain"
+              />
             </div>
+
             <span className="text-lg font-semibold text-gray-900">
-              KlickCard
+              KlickCard Merchant
             </span>
           </Link>
 
           {isMobile && (
             <button
+              type="button"
               onClick={closeSidebar}
               className="p-1 rounded-lg hover:bg-gray-100 text-gray-500"
             >
@@ -220,6 +304,7 @@ export default function Sidebar() {
           <ul className="space-y-1">
             {menuItems.map((item) => {
               const active = isActive(item.href);
+
               const Icon =
                 active && item.activeIcon ? item.activeIcon : item.icon;
 
@@ -229,7 +314,8 @@ export default function Sidebar() {
                     href={item.href}
                     onClick={isMobile ? closeSidebar : undefined}
                     className={`
-                      flex items-center px-3 py-2.5 rounded-lg transition-all duration-200
+                      flex items-center px-3 py-2.5 rounded-lg
+                      transition-all duration-200
                       ${
                         active
                           ? "bg-primary-50 text-primary-600"
@@ -238,17 +324,27 @@ export default function Sidebar() {
                     `}
                   >
                     <Icon
-                      className={`w-5 h-5 flex-shrink-0 ${active ? "text-primary-600" : "text-gray-500"}`}
+                      className={`
+                        w-5 h-5 flex-shrink-0
+                        ${active ? "text-primary-600" : "text-gray-500"}
+                      `}
                     />
+
                     <span className="ml-3 text-sm font-medium">
                       {item.label}
                     </span>
+
                     {item.badge && (
                       <span
                         className={`
-                        ml-auto px-2 py-0.5 text-xs font-medium rounded-full
-                        ${active ? "bg-primary-200 text-primary-700" : "bg-gray-200 text-gray-600"}
-                      `}
+                          ml-auto px-2 py-0.5 text-xs font-medium
+                          rounded-full
+                          ${
+                            active
+                              ? "bg-primary-200 text-primary-700"
+                              : "bg-gray-200 text-gray-600"
+                          }
+                        `}
                       >
                         {item.badge}
                       </span>
@@ -258,18 +354,28 @@ export default function Sidebar() {
               );
             })}
           </ul>
-          <div className="my-4 border-t border-gray-200" />
 
-          {/* QR Scanner Button */}
+          <div className="my-4 border-t border-gray-200" />
+          <div className="flex items-center gap-3 mb-5">
+            <CreditBadge />
+          </div>
+          {/* QR Scanner */}
           <button
+            type="button"
             onClick={openScanner}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 transition-all"
+            className="
+              w-full flex items-center gap-3 px-4 py-3
+              rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600
+              text-white hover:from-purple-700 hover:to-indigo-700
+              transition-all
+            "
           >
             <CameraIcon className="w-5 h-5" />
+
             <span className="font-medium">Scan Customer Card</span>
           </button>
 
-          {/* Scanner Status */}
+          {/* Scanner */}
           {showScanner && (
             <div className="mt-4">
               <QRScanner
@@ -286,25 +392,31 @@ export default function Sidebar() {
             <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <CheckCircleIcon className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-green-800">
                     Card Verified!
                   </p>
+
                   <div className="mt-2 space-y-1 text-sm">
                     <p className="text-gray-700">
                       <span className="text-gray-500">Customer:</span>{" "}
                       {scanResult.user.full_name}
                     </p>
+
                     <p className="text-gray-700">
                       <span className="text-gray-500">Card:</span>{" "}
                       {scanResult.card.card_number}
                     </p>
+
                     <p className="text-gray-700">
                       <span className="text-gray-500">Points:</span>{" "}
                       {scanResult.card.points}
                     </p>
                   </div>
+
                   <button
+                    type="button"
                     onClick={() => {
                       setScanResult(null);
                       setShowScanner(false);
@@ -323,12 +435,16 @@ export default function Sidebar() {
             <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <XCircleIcon className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-red-800">
                     Scan Failed
                   </p>
+
                   <p className="text-sm text-red-600 mt-1">{scanError}</p>
+
                   <button
+                    type="button"
                     onClick={() => setScanError(null)}
                     className="mt-2 text-sm text-red-700 hover:text-red-800 font-medium"
                   >
@@ -340,17 +456,23 @@ export default function Sidebar() {
           )}
         </nav>
 
-        {/* Bottom Items */}
+        {/* Bottom Menu */}
         <div className="border-t border-gray-200 px-3 py-4 flex-shrink-0">
           <ul className="space-y-1">
             {bottomMenuItems.map((item) => (
               <li key={item.id}>
                 {item.id === "logout" ? (
                   <button
+                    type="button"
                     onClick={handleLogout}
-                    className="w-full flex items-center px-3 py-2.5 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
+                    className="
+                      w-full flex items-center px-3 py-2.5 rounded-lg
+                      text-gray-600 hover:bg-red-50 hover:text-red-600
+                      transition-all duration-200
+                    "
                   >
                     <item.icon className="w-5 h-5 flex-shrink-0 text-gray-500" />
+
                     <span className="ml-3 text-sm font-medium">
                       {item.label}
                     </span>
@@ -359,9 +481,14 @@ export default function Sidebar() {
                   <Link
                     href={item.href}
                     onClick={isMobile ? closeSidebar : undefined}
-                    className="flex items-center px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200"
+                    className="
+                      flex items-center px-3 py-2.5 rounded-lg
+                      text-gray-600 hover:bg-gray-100
+                      hover:text-gray-900 transition-all duration-200
+                    "
                   >
                     <item.icon className="w-5 h-5 flex-shrink-0 text-gray-500" />
+
                     <span className="ml-3 text-sm font-medium">
                       {item.label}
                     </span>

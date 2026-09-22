@@ -1,54 +1,62 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { selectIsAuthenticated } from "@/store/slices/authSlice";
 
-const SidebarContext = createContext({});
+const SidebarContext = createContext(null);
 
 export function SidebarProvider({ children }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
   const isAuthenticated = useSelector(selectIsAuthenticated);
 
-  // Debug logging
+  // Keep sidebar state synchronized with authentication state
   useEffect(() => {
-    console.log("SidebarContext - isAuthenticated:", isAuthenticated);
-    console.log("SidebarContext - isOpen:", isOpen);
-    console.log("SidebarContext - isMobile:", isMobile);
-  }, [isAuthenticated, isOpen, isMobile]);
+    if (!isAuthenticated) {
+      // Always close sidebar when logged out
+      setIsOpen(false);
+    }
+  }, [isAuthenticated]);
 
+  // Handle responsive behavior
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
+
       setIsMobile(mobile);
-      // Only open on desktop when authenticated
-      if (!mobile && isAuthenticated) {
-        console.log("Opening sidebar - desktop");
+
+      if (!isAuthenticated) {
+        setIsOpen(false);
+        return;
+      }
+
+      // Authenticated desktop users get an open sidebar
+      if (!mobile) {
         setIsOpen(true);
-      } else if (mobile) {
-        console.log("Closing sidebar - mobile");
+      } else {
+        // Mobile starts closed
         setIsOpen(false);
       }
     };
 
     checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, [isAuthenticated]);
 
-  // Close sidebar when logging out
-  useEffect(() => {
-    if (!isAuthenticated) {
-      console.log("Closing sidebar - logged out");
-      setIsOpen(false);
-    }
+    window.addEventListener("resize", checkMobile);
+
+    return () => {
+      window.removeEventListener("resize", checkMobile);
+    };
   }, [isAuthenticated]);
 
   const toggleSidebar = () => {
-    if (isAuthenticated) {
-      setIsOpen(!isOpen);
+    if (!isAuthenticated) {
+      setIsOpen(false);
+      return;
     }
+
+    setIsOpen((prev) => !prev);
   };
 
   const closeSidebar = () => {
@@ -56,20 +64,37 @@ export function SidebarProvider({ children }) {
   };
 
   const openSidebar = () => {
-    if (isAuthenticated && !isMobile) {
+    if (!isAuthenticated) {
+      setIsOpen(false);
+      return;
+    }
+
+    if (!isMobile) {
       setIsOpen(true);
     }
   };
 
+  // This prevents consumers from accidentally treating the sidebar
+  // as open while the user is logged out.
+  const sidebarIsOpen = isAuthenticated && isOpen;
+
   return (
     <SidebarContext.Provider
       value={{
-        isOpen,
+        isOpen: sidebarIsOpen,
         isMobile,
+        isAuthenticated,
         toggleSidebar,
         closeSidebar,
         openSidebar,
-        setIsOpen,
+        setIsOpen: (value) => {
+          if (!isAuthenticated) {
+            setIsOpen(false);
+            return;
+          }
+
+          setIsOpen(value);
+        },
       }}
     >
       {children}
@@ -79,8 +104,10 @@ export function SidebarProvider({ children }) {
 
 export function useSidebar() {
   const context = useContext(SidebarContext);
+
   if (!context) {
     throw new Error("useSidebar must be used within a SidebarProvider");
   }
+
   return context;
 }
