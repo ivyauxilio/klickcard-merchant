@@ -48,7 +48,7 @@ export default function Header() {
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const { user } = useSelector((state) => state.auth);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  // const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const [showScanner, setShowScanner] = useState(false);
   const [scanning, setScanning] = useState(false);
@@ -130,13 +130,13 @@ export default function Header() {
     setScanError(null);
   };
 
-  useEffect(() => {
-    console.log("useeffect logout");
-    if (isLoggingOut && !isAuthenticated) {
-      router.push("/login");
-      router.refresh();
-    }
-  }, [isAuthenticated, isLoggingOut, router]);
+  // useEffect(() => {
+  //   console.log("useeffect logout");
+  //   if (isLoggingOut && !isAuthenticated) {
+  //     router.push("/login");
+  //     router.refresh();
+  //   }
+  // }, [isAuthenticated, isLoggingOut, router]);
 
   if (!isAuthenticated) {
     return null;
@@ -144,31 +144,25 @@ export default function Header() {
 
   const handleLogout = async () => {
     try {
-      const result = await dispatch(logoutUser()).unwrap();
+      await dispatch(logoutUser()).unwrap();
 
-      setIsLoggingOut(true);
-      // Show success notification
       dispatch(
         addNotification({
           type: "success",
           message: "Logged out successfully",
         }),
       );
-      // Redirect to login page
-      window.location.href = "/login";
-      router.push("/login");
-      router.refresh(); // Force refresh to clear server-side state
+
+      router.replace("/login");
     } catch (error) {
-      // Even if API fails, we still redirect
       dispatch(
         addNotification({
           type: "warning",
           message: error || "Logged out, but API call failed",
         }),
       );
-      window.location.href = "/login";
-      router.push("/login");
-      router.refresh();
+
+      router.replace("/login");
     }
   };
 
