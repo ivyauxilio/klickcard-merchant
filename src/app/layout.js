@@ -10,6 +10,7 @@ import { headers } from "next/headers";
 
 import LayoutWrapper from "@/components/layout/LayoutWrapper";
 import AuthProvider from "@/components/AuthProvider";
+import NotificationPoller from "@/components/notifications/NotificationPoller";
 
 export const metadata = {
   title: "KlickCard App",
@@ -21,6 +22,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className="font-body antialiased">
         <Providers>
+          <NotificationPoller />
           <AuthProvider>
             <SidebarProvider>
               <div className="flex h-screen overflow-hidden bg-gray-50">

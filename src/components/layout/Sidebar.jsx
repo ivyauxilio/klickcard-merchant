@@ -27,6 +27,7 @@ import {
   CheckCircleIcon,
   ShoppingCartIcon,
   BanknotesIcon,
+  BellIcon,
 } from "@heroicons/react/24/outline";
 
 import {
@@ -76,6 +77,12 @@ const menuItems = [
     href: "/merchant/subscription",
     icon: BanknotesIcon,
   },
+  // {
+  //   name: "Notifications",
+  //   href: "/merchant/notifications",
+  //   icon: BellIcon,
+  //   badgeKey: "unreadCount", // reads from redux
+  // },
 ];
 
 const QRScanner = dynamic(() => import("@/components/QRScanner"), {

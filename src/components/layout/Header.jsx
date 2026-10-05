@@ -23,6 +23,8 @@ import {
 import { useState, useEffect } from "react";
 import { addNotification } from "@/store/slices/uiSlice";
 import FloatingScanButton from "@/components/FloatingScanButton";
+import NotificationBell from "@/components/notifications/NotificationBell";
+import { selectUnreadCount } from "@/store/slices/notificationSlice";
 
 // Dynamically import mobile scanner
 const MobileScanner = dynamic(() => import("@/components/MobileScanner"), {
@@ -40,6 +42,7 @@ const MobileScanner = dynamic(() => import("@/components/MobileScanner"), {
 export default function Header() {
   const dispatch = useDispatch();
   const router = useRouter();
+  const unreadCount = useSelector(selectUnreadCount);
   const { toggleSidebar, isMobile } = useSidebar();
   const pathname = usePathname();
   const isAuthenticated = useSelector(selectIsAuthenticated);
@@ -138,6 +141,7 @@ export default function Header() {
   if (!isAuthenticated) {
     return null;
   }
+
   const handleLogout = async () => {
     try {
       const result = await dispatch(logoutUser()).unwrap();
@@ -202,10 +206,11 @@ export default function Header() {
 
         {/* Right Section */}
         <div className="flex items-center gap-2">
-          <button className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors">
+          {/* <button className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors">
             <BellIcon className="w-5 h-5 text-gray-600" />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
+          </button> */}
+          <NotificationBell />
 
           {/* Profile Dropdown */}
           <div className="relative">

@@ -10,6 +10,7 @@ import merchantReducer from "./slices/merchantSlice";
 import menuReducer from "./slices/menuSlice";
 import productReducer from "./slices/productSlice";
 import walletReducer from "./slices/walletSlice";
+import notificationReducer from "./slices/notificationSlice";
 
 const persistConfig = {
   key: "root",
@@ -25,6 +26,7 @@ const rootReducer = combineReducers({
   merchant: merchantReducer,
   products: productReducer,
   wallet: walletReducer,
+  notifications: notificationReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
