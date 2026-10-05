@@ -2,7 +2,8 @@ import axios from "axios";
 import Cookies from "js-cookie";
 
 // Base URL of your Laravel 12 API, e.g. http://localhost:8000/api
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "https://console.klickcard.ph/api";
 
 const api = axios.create({
   baseURL: API_URL,
@@ -29,7 +30,7 @@ api.interceptors.response.use(
       Cookies.remove("auth_token");
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 // Normalizes Laravel's validation error shape ({ message, errors: {field: [msg]} })
@@ -37,7 +38,9 @@ api.interceptors.response.use(
 export function extractErrors(error) {
   const response = error?.response?.data;
   if (!response) {
-    return { general: "Network error. Please check your connection and try again." };
+    return {
+      general: "Network error. Please check your connection and try again.",
+    };
   }
   if (response.errors) {
     const flat = {};
@@ -46,7 +49,9 @@ export function extractErrors(error) {
     });
     return flat;
   }
-  return { general: response.message || "Something went wrong. Please try again." };
+  return {
+    general: response.message || "Something went wrong. Please try again.",
+  };
 }
 
 export default api;
