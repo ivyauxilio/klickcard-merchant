@@ -55,33 +55,22 @@ export const logoutUser = createAsyncThunk(
   async (_, { rejectWithValue, dispatch }) => {
     try {
       await api.post("/logout");
-      // Clear localStorage
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        localStorage.removeItem("persist:root"); // If using redux-persist
-      }
-
-      // Import and dispatch resetUI action
-      const { resetUI } = await import("@/store/slices/uiSlice");
-      dispatch(resetUI());
-
-      return null;
     } catch (error) {
-      // Even if the server call fails, we still clear the local session.
-      // return rejectWithValue(extractErrors(error));
-      // Even if API fails, clear local data
+      console.error("Logout API error:", error);
+    } finally {
       if (typeof window !== "undefined") {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         localStorage.removeItem("persist:root");
       }
 
-      // Import and dispatch resetUI action
+      Cookies.remove(TOKEN_COOKIE);
+
       const { resetUI } = await import("@/store/slices/uiSlice");
       dispatch(resetUI());
-      return rejectWithValue(error.response?.data?.message || "Logout failed");
     }
+
+    return null;
   },
 );
 
@@ -253,6 +242,7 @@ const authSlice = createSlice({
         state.token = null;
         state.isAuthenticated = false;
         state.status = "idle";
+        state.isLoading = false;
         setSession(null);
         console.log("load logout slice");
       })
@@ -260,7 +250,9 @@ const authSlice = createSlice({
         // Clear local session regardless so the user isn't stuck.
         state.user = null;
         state.token = null;
+        state.isAuthenticated = false;
         state.status = "idle";
+        state.isLoading = false;
         setSession(null);
       })
 
@@ -330,17 +322,27 @@ const authSlice = createSlice({
       // Hydrate
       .addCase(hydrateAuth.pending, (state) => {
         state.isHydrated = false;
+        state.isInitialized = false;
       })
       .addCase(hydrateAuth.fulfilled, (state, action) => {
         state.isHydrated = true;
+        state.isInitialized = true;
+
         if (action.payload) {
           state.user = action.payload.user;
           state.token = action.payload.token;
           state.isAuthenticated = true;
+        } else {
+          state.user = null;
+          state.token = null;
+          state.isAuthenticated = false;
         }
       })
       .addCase(hydrateAuth.rejected, (state) => {
         state.isHydrated = true;
+        state.isInitialized = true;
+        state.user = null;
+        state.token = null;
         state.isAuthenticated = false;
       });
   },

@@ -23,6 +23,8 @@ import {
 import { useState, useEffect } from "react";
 import { addNotification } from "@/store/slices/uiSlice";
 import FloatingScanButton from "@/components/FloatingScanButton";
+import NotificationBell from "@/components/notifications/NotificationBell";
+import { selectUnreadCount } from "@/store/slices/notificationSlice";
 
 // Dynamically import mobile scanner
 const MobileScanner = dynamic(() => import("@/components/MobileScanner"), {
@@ -40,12 +42,13 @@ const MobileScanner = dynamic(() => import("@/components/MobileScanner"), {
 export default function Header() {
   const dispatch = useDispatch();
   const router = useRouter();
+  const unreadCount = useSelector(selectUnreadCount);
   const { toggleSidebar, isMobile } = useSidebar();
   const pathname = usePathname();
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const { user } = useSelector((state) => state.auth);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  // const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const [showScanner, setShowScanner] = useState(false);
   const [scanning, setScanning] = useState(false);
@@ -127,44 +130,39 @@ export default function Header() {
     setScanError(null);
   };
 
-  useEffect(() => {
-    console.log("useeffect logout");
-    if (isLoggingOut && !isAuthenticated) {
-      router.push("/login");
-      router.refresh();
-    }
-  }, [isAuthenticated, isLoggingOut, router]);
+  // useEffect(() => {
+  //   console.log("useeffect logout");
+  //   if (isLoggingOut && !isAuthenticated) {
+  //     router.push("/login");
+  //     router.refresh();
+  //   }
+  // }, [isAuthenticated, isLoggingOut, router]);
 
   if (!isAuthenticated) {
     return null;
   }
+
   const handleLogout = async () => {
     try {
-      const result = await dispatch(logoutUser()).unwrap();
+      await dispatch(logoutUser()).unwrap();
 
-      setIsLoggingOut(true);
-      // Show success notification
       dispatch(
         addNotification({
           type: "success",
           message: "Logged out successfully",
         }),
       );
-      // Redirect to login page
-      window.location.href = "/login";
-      router.push("/login");
-      router.refresh(); // Force refresh to clear server-side state
+
+      router.replace("/login");
     } catch (error) {
-      // Even if API fails, we still redirect
       dispatch(
         addNotification({
           type: "warning",
           message: error || "Logged out, but API call failed",
         }),
       );
-      window.location.href = "/login";
-      router.push("/login");
-      router.refresh();
+
+      router.replace("/login");
     }
   };
 
@@ -202,10 +200,11 @@ export default function Header() {
 
         {/* Right Section */}
         <div className="flex items-center gap-2">
-          <button className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors">
+          {/* <button className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors">
             <BellIcon className="w-5 h-5 text-gray-600" />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
+          </button> */}
+          <NotificationBell />
 
           {/* Profile Dropdown */}
           <div className="relative">
